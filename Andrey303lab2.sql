@@ -20,13 +20,11 @@ FROM [Order] AS ord
 SELECT 
 	cust.FirstName,
 	cust.LastName, 
-	ord.CustomerId, 
-	COUNT(ord.CustomerId) AS [Count] 
+	CASE WHEN COUNT(ord.CustomerId) IS NOT NULL THEN COUNT(ord.CustomerId) ELSE 0 END AS [Count] 
 FROM [Order] AS ord
-	INNER JOIN Customer AS cust ON ord.CustomerId = cust.Id
+	RIGHT JOIN Customer AS cust ON ord.CustomerId = cust.Id
 GROUP BY cust.FirstName, cust.LastName, ord.CustomerId
-ORDER BY cust.FirstName, cust.LastName;
-
+ORDER BY cust.FirstName, cust.LastName
 
 SELECT 
 	cust.FirstName, 
@@ -37,15 +35,13 @@ FROM Customer AS cust
 				FROM [Order] AS ord WHERE ord.CustomerId = cust.Id)c
 ORDER BY cust.FirstName, cust.LastName;
 
-
 SELECT 
 	prod.Id,
-	prod.ProductName,
-	prod.Package,
-	prod.IsDiscontinued,
-	ordi.Quantity,
-	ordi.Quantity * ordi.UnitPrice AS TotalAmount
+	prod.ProductName, prod.Package, prod.IsDiscontinued, 
+	SUM(ordi.Quantity) AS Quantity,
+	SUM(ordi.Quantity * ordi.UnitPrice) AS TotalAmount
 FROM Product AS prod
 	INNER JOIN
 		[OrderItem] AS ordi ON prod.Id = ordi.ProductId
-ORDER BY ordi.Quantity;
+		GROUP BY prod.Id, prod.ProductName, prod.Package, prod.IsDiscontinued 
+ORDER BY prod.Id;
